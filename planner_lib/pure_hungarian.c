@@ -27,24 +27,6 @@ void alternate_pairs_in_path(int *curr_path, int last_elem_idx,
 //	assert(last_elem_idx == 1 || last_elem_idx % 2 == 1);
 	assert(amount_of_vertexes % 2 == 0);
 
-	bool include = true;
-
-	printf("\n");
-	printf("\n");
-
-	printf("pair before excluted\n");
-	for (int r = 0; r < 3; r++) {
-		printf("(%d %d) ", r, edge_r_to_c[r]);
-	}
-	printf("\n");
-
-	printf("curr_path\n");
-	printf("last elem idx %d\n", last_elem_idx);
-	for (int i = 0; i <= last_elem_idx; i++) {
-		printf("%d ", curr_path[i]);
-	}
-	printf("\n");
-
 	for (int i = 0; i < last_elem_idx; i++) {
 		// (i) -> (i+1) edge should be added
 		if (i % 2 == 0) {
@@ -62,17 +44,10 @@ void alternate_pairs_in_path(int *curr_path, int last_elem_idx,
 			int r = curr_path[i+1];
 
 			printf("removing connection from c %d to r %d\n", c, r);
-			edge_c_to_r[c] = r;
+//			edge_c_to_r[c] = r;
+
 		}
 	}
-
-
-	printf("pair after excluted\n");
-	for (int r = 0; r < 3; r++) {
-		printf("(%d %d) ", r, edge_r_to_c[r]);
-	}
-	printf("\n");
-	printf("\n");
 }
 
 // Tries to find non-saturated vertex from the second half.
