@@ -3,14 +3,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 #define BAD_EDGE INFINITY
-
-void set_all(int *arr, int arr_size, int value) {
-	for (int i = 0; i < arr_size; i++) {
-		arr[i] = value;
-	}
-}
 
 void multiply_by_scalar(double **m, int rows, int columns, double scalar) {
 	for (int r = 0; r < rows; r++) {

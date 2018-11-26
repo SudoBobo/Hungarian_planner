@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <float.h>
 #include <math.h>
+#include <assert.h>
 
 void set_all(int *arr, int arr_size, int value) {
 	for (int i = 0; i < arr_size; i++) {
@@ -23,12 +24,6 @@ void alternate_pairs_in_path(int *curr_path, int last_elem_idx,
 //		printf("%d ", curr_path[i]);
 //	}
 //	printf("\n");
-
-	printf("Before alternate\n");
-	printf("r_to_c\n");
-	print_array(edge_r_to_c);
-	printf("c_to_r\n");
-	print_array(edge_c_to_r);
 
 	assert(last_elem_idx == 1 || last_elem_idx / 2 == 1);
 
@@ -52,11 +47,6 @@ void alternate_pairs_in_path(int *curr_path, int last_elem_idx,
 		}
 	}
 
-	printf("After alternate\n");
-	printf("r_to_c\n");
-	print_array(edge_r_to_c);
-	printf("c_to_r\n");
-	print_array(edge_c_to_r);
 }
 
 // Tries to find non-saturated vertex from the second half.

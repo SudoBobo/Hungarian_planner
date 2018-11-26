@@ -1,19 +1,28 @@
-#include "planner_lib/data_preparer.h"
-#include "planner_lib/pure_hungarian.h"
 #include "planner_lib/planner.c"
+#include <stdio.h>
 
+void print_pairs(int **p, int n_pairs) {
+	for (int i = 0; i < n_pairs; i++) {
+		printf("%d %d   ", p[i][0], p[i][1]);
+	}
+	printf("\n");
+}
+
+bool compare(int** p, int** exp_p, int n_pairs) {
+	for (int i = 0; i < n_pairs; i++) {
+		int f = exp_p[i][0];
+		int s = exp_p[i][1];
+
+		bool is_found = false;
+		for (int j = 0; j < n_pairs; j++) {
+			if (p[j][0] == f && p[j][1] == s)
+				is_found = true;
+		}
+
+		assert(is_found);
+	}
+}
 int main() {
-
-	// test data preparer
-
-	// test pure hungarian
-
-	// test planner
-
-
-	//
-
-	//
 	printf("TEST\n");
 
 	int rows = 3;
@@ -25,46 +34,39 @@ int main() {
 		m[i] = (double*) malloc(columns * sizeof(double));
 	}
 
-	int ** optimal_pair;
-	int n_optimal_pairs = find_optimal_pairs(m, rows, columns, optimal_pair);
+	m[0][0] = 2.82387e+08;
+	m[0][1] = 2.0413e+09;
+	m[0][2] = 1.19032e+09;
 
-//	m[0][0] = 3.46981e+08;
-//	m[0][1] = 3.38214e+08;
-//	m[0][2] = 5.56931e+08;
-//
-//	m[1][0] = 7.71379e+08;
-//	m[1][1] = 1.26641e+09;
-//	m[1][2] = 9.07187e+08;
-//
-//	m[2][0] = 7.46208e+08;
-//	m[2][1] = 3.5137e+08;
-//	m[2][2] = 1.20154e+09;
+	m[1][0] = 1.06191e+08;
+	m[1][1] = 1.39772e+09;
+	m[1][2] = 2.90993e+08;
 
-	m[0][0] = 9.08601e+08;
-	m[0][1] = 1.56176e+08;
-	m[0][2] = 1.17581e+09;
+	m[2][0] = 2.08267e+09;
+	m[2][1] = 6.2514e+07;
+	m[2][2] = 1.50174e+09;
 
-	m[1][0] = 1.98532e+09;
-	m[1][1] = 1.15267e+09;
-	m[1][2] = 3.25848e+08;
-
-	m[2][0] = 4.14359e+08;
-	m[2][1] = 9.36231e+08;
-	m[2][2] = 1.27635e+09;
-
-//	double m[3][3] = {
-//		{3.46981e+08, 3.38214e+08, 5.56931e+08,},
-//		{7.71379e+08, 1.26641e+09, 9.07187e+08,},
-//		{7.46208e+08, 3.5137e+08, 1.20154e+09},
-//	};
 	int n_pairs_needed = (rows > columns) ? columns : rows;
+	int **pairs = hungarian_assignment_test(m, n, n_pairs_needed);
 
-	int **res = hungarian_assignment(m, n, n_pairs_needed);
-	for (int r = 0; r < n; r++) {
-		for (int c = 0; c < n; c++) {
-			printf("%d ", res[r][c]);
-		}
-		printf("\n");
+	int **expected_pairs = (int**) malloc(n_pairs_needed * sizeof(int *));
+	for (int i = 0; i < rows; i++) {
+		expected_pairs[i] = (int*) malloc(2 * sizeof(int));
 	}
+	expected_pairs[0][0] = 0;
+	expected_pairs[0][1] = 0;
 
+	expected_pairs[1][0] = 1;
+	expected_pairs[1][1] = 2;
+
+	expected_pairs[2][0] = 2;
+	expected_pairs[2][1] = 1;
+
+	printf("exp\n");
+	print_pairs(expected_pairs, n_pairs_needed);
+
+	printf("got\n");
+	print_pairs(pairs, n_pairs_needed);
+
+	compare(pairs, expected_pairs, n_pairs_needed);
 }
