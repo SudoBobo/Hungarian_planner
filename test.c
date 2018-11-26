@@ -50,9 +50,10 @@ int main() {
 	int **pairs = hungarian_assignment_test(m, n, n_pairs_needed);
 
 	int **expected_pairs = (int**) malloc(n_pairs_needed * sizeof(int *));
-	for (int i = 0; i < rows; i++) {
+	for (int i = 0; i < n_pairs_needed; i++) {
 		expected_pairs[i] = (int*) malloc(2 * sizeof(int));
 	}
+
 	expected_pairs[0][0] = 0;
 	expected_pairs[0][1] = 0;
 

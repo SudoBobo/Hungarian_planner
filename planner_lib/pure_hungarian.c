@@ -16,37 +16,63 @@ int double_eq(double d1, double d2) {
 	return fabs(d1 - d2) < 0.000001;
 }
 
+// TODO here is the bug
 void alternate_pairs_in_path(int *curr_path, int last_elem_idx,
 			     int *edge_r_to_c, int *edge_c_to_r) {
 
-//	printf("Alternate path\n");
-//	for (int i = 0; i < last_elem_idx + 1; i++) {
-//		printf("%d ", curr_path[i]);
-//	}
-//	printf("\n");
+	// there must be even amount of vertexes
+	// and odd amount of edges
 
-	assert(last_elem_idx == 1 || last_elem_idx / 2 == 1);
+	int amount_of_vertexes = last_elem_idx + 1;
+//	assert(last_elem_idx == 1 || last_elem_idx % 2 == 1);
+	assert(amount_of_vertexes % 2 == 0);
 
 	bool include = true;
-	for (int i = 0; i < last_elem_idx; i += 2) {
-		if (include) {
-			// do include for two elem
+
+	printf("\n");
+	printf("\n");
+
+	printf("pair before excluted\n");
+	for (int r = 0; r < 3; r++) {
+		printf("(%d %d) ", r, edge_r_to_c[r]);
+	}
+	printf("\n");
+
+	printf("curr_path\n");
+	printf("last elem idx %d\n", last_elem_idx);
+	for (int i = 0; i <= last_elem_idx; i++) {
+		printf("%d ", curr_path[i]);
+	}
+	printf("\n");
+
+	for (int i = 0; i < last_elem_idx; i++) {
+		// (i) -> (i+1) edge should be added
+		if (i % 2 == 0) {
 			int r = curr_path[i];
 			int c = curr_path[i+1];
 
+			printf("adding connection from r %d to c %d\n", r, c);
+
+			// remove old edge from r_to_c
 			edge_r_to_c[r] = c;
-
-			edge_r_to_c[edge_c_to_r[c]] = -1;
 			edge_c_to_r[c] = r;
-
-			include = false;
 		} else {
-			// do exclude for two elems
-			// actuall excluding was on the previous stage
-			include = true;
+			// (i+1) <- (i) edge should be removed
+			int c = curr_path[i];
+			int r = curr_path[i+1];
+
+			printf("removing connection from c %d to r %d\n", c, r);
+			edge_c_to_r[c] = r;
 		}
 	}
 
+
+	printf("pair after excluted\n");
+	for (int r = 0; r < 3; r++) {
+		printf("(%d %d) ", r, edge_r_to_c[r]);
+	}
+	printf("\n");
+	printf("\n");
 }
 
 // Tries to find non-saturated vertex from the second half.
@@ -63,18 +89,11 @@ int DFS(int idx, char r_or_c, int *curr_path, int *curr_path_idx,
 
 	assert(r_or_c == 'c' || r_or_c == 'r');
 
-//	printf("call to DFS\n");
-//	printf("curr path idx %d\n", *curr_path_idx);
-
-//	for (int i = 0; i < *curr_path_idx + 1; i++) {
-//		printf("%d ", curr_path[i]);
-//	}
-//	printf("\n");
-
 	// 'idx' is in second half
 	if (r_or_c == 'c') {
 		int c = idx;
 
+		assert(curr_path[*curr_path_idx] == -1);
 		curr_path[*curr_path_idx] = c;
 		*curr_path_idx += 1;
 		is_c_visited[c] = true;
@@ -82,7 +101,6 @@ int DFS(int idx, char r_or_c, int *curr_path, int *curr_path_idx,
 
 		// reached non-saturated vertex from the second half
 		if (edge_c_to_r[c] == -1) {
-//			printf("reach non saturated\n");
 			return 1;
 		}
 
@@ -112,6 +130,7 @@ int DFS(int idx, char r_or_c, int *curr_path, int *curr_path_idx,
 	if (r_or_c == 'r') {
 		int r = idx;
 
+		assert(curr_path[*curr_path_idx] == -1);
 		curr_path[*curr_path_idx] = r;
 		*curr_path_idx += 1;
 		is_r_visited[r] = true;
@@ -160,12 +179,17 @@ int ** hungarian_assignment(double **m, int n, int n_pairs_needed) {
 	int *edge_c_to_r = (int*) calloc((size_t)n, sizeof(int));
 	set_all(edge_c_to_r, n, -1);
 
+	// sets (implemented as arrays) to store visited nodes during every
+	// DFS run. Zeroed after each DFS run.
 	int *is_r_visited = (int*) calloc((size_t)n, sizeof(int));
 	int *is_c_visited = (int*) calloc((size_t)n, sizeof(int));
 
+	// sets (implemented as arrays) to store visited nodes during every
+	// step of Kuhn algorithm. Zeroed every time we change potentials.
 	int *r_visited_overall = (int *) calloc((size_t)n, sizeof(int));
 	int *c_visited_overall = (int *) calloc((size_t)n, sizeof(int));
 
+	// path of the current DFS. All elems set to -1 after each DFS run
 	int *curr_path = (int*) calloc((size_t)(n * 2), sizeof(int));
 	set_all(curr_path, n * 2, -1);
 
@@ -193,7 +217,7 @@ int ** hungarian_assignment(double **m, int n, int n_pairs_needed) {
 				}
 			}
 			// clean up 'is visited' arrays
-			set_all(curr_path, 2 * n, 0);
+			set_all(curr_path, 2 * n, -1);
 			*curr_path_idx = 0;
 			set_all(is_r_visited, n, 0);
 			set_all(is_c_visited, n, 0);
@@ -213,8 +237,6 @@ int ** hungarian_assignment(double **m, int n, int n_pairs_needed) {
 				delta = (d < delta) ? d : delta;
 			}
 		}
-
-		printf("new delta %f\n", delta);
 
 		for (int i = 0; i < n; i++) {
 			if (r_visited_overall[i])
@@ -242,7 +264,24 @@ int ** hungarian_assignment(double **m, int n, int n_pairs_needed) {
 		optimal_pairs[i] = (int *) malloc(2 * sizeof(int));
 	}
 
+
+//	printf("n_pairs_needed %d\n", n_pairs_needed);
+//	printf("n_pair_found %d\n", n_pairs_found);
+//
 	int curr_pair = 0;
+//	printf("printing r_to_c\n");
+//
+//	for (int r = 0; r < n; r++) {
+//		printf("(%d %d)  ", r, edge_r_to_c[r]);
+//	}
+//
+//	printf("\n");
+//	printf("printing c_to_r\n");
+//
+//	for (int c = 0; c < n; c++) {
+//		printf("(%d %d)  ", c, edge_c_to_r[c]);
+//	}
+
 	for (int r = 0; r < n; r++) {
 		int c = edge_r_to_c[r];
 		if (c != -1) {
@@ -253,34 +292,4 @@ int ** hungarian_assignment(double **m, int n, int n_pairs_needed) {
 	}
 
 	return optimal_pairs;
-
-//	int **res = (int**) malloc(n * sizeof(int *));
-//	for (int i = 0; i < n; i++) {
-//		m[i] = (int*) malloc(n * sizeof(int));
-//	}
-//
-//	// prepare result for print
-//	for (int r = 0; r < n; r++) {
-//		if (edge_r_to_c[r] != -1) {
-//			int c = edge_r_to_c[r];
-//			res[r][c] = 0;
-//		}
-//	}
-//
-//	for (int c = 0; c < n; c++) {
-//		if (edge_c_to_r[c] != -1) {
-//			int r = edge_c_to_r[c];
-//			res[r][c] = 0;
-//		}
-//	}
-//
-//	for (int r = 0; r < n; r++) {
-//		for (int c = 0; c < n; c++) {
-//			if (res[r][c] != 0) {
-//				res[r][c] = -1;
-//			}
-//		}
-//	}
-
-//	return res;
 }
