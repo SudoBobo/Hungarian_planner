@@ -1,6 +1,6 @@
-#include "data_preparer.h"
-#include "pure_hungarian.h"
-#include "planner.c"
+#include "planner_lib/data_preparer.h"
+#include "planner_lib/pure_hungarian.h"
+#include "planner_lib/planner.c"
 
 int main() {
 

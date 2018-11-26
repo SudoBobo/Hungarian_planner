@@ -1,0 +1,5 @@
+project(planner_lib)
+set(SOURCES planner.c data_preparer.c pure_hungarian.c)
+set(HEADERS data_preparer.h pure_hungarian.h)
+add_library(planner_lib ${SOURCES} ${HEADERS})
+target_include_directories(planner_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
