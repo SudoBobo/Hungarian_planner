@@ -1,1 +1,1 @@
-int ** hungarian_assignment(double **m, int n, int n_pairs_needed);
+int hungarian_assignment(double **m, int n, int **pairs, int n_pairs_needed);

@@ -43,13 +43,6 @@ void make_positive(double **m, int rows, int columns) {
 }
 
 void add_columns(double ***m, int rows, int columns) {
-//	for (int r = 0; r < rows; r++) {
-//		m[r] = (double*) realloc(m[r], rows * sizeof(double));
-//		for (int c = columns; c < columns; c++) {
-//			m[r][c] = BAD_EDGE;
-//		}
-//	}
-
 	double **new_m = (double**) malloc(rows * sizeof(double *));
 	for (int i = 0; i < rows; i++) {
 		new_m[i] = (double*) malloc(rows * sizeof(double));
@@ -68,14 +61,6 @@ void add_columns(double ***m, int rows, int columns) {
 }
 
 void add_rows(double ***m, int rows, int columns) {
-//	printf("adding rows\n");
-//	m = (double**) realloc(m, columns * sizeof(double *));
-//	for (int r = rows; r < columns; r++) {
-//		m[r] = (double*) malloc(columns * sizeof(double));
-//		for (int c = 0; c < columns; c++) {
-//			m[r][c] = BAD_EDGE;
-//		}
-//	}
 	double **new_m = (double**) malloc(columns * sizeof(double *));
 	for (int i = 0; i < columns; i++) {
 		new_m[i] = (double*) malloc(columns * sizeof(double));
@@ -114,27 +99,17 @@ int prepare_matrix(double **orig_m, int rows, int columns, double ***res) {
 		}
 	}
 
-	print_matrix_m(new_m, rows, columns);
 	set_infs(new_m, rows, columns);
-	print_matrix_m(new_m, rows, columns);
 	multiply_by_scalar(new_m, rows, columns, -1.0);
-	print_matrix_m(new_m, rows, columns);
-
-	printf("\nmaking postive\n");
 	make_positive(new_m, rows, columns);
-	print_matrix_m(new_m, rows, columns);
 
 	if (rows > columns) {
 		add_columns(&new_m, rows, columns);
 	}
 
-	print_matrix_m(new_m, rows, columns);
-
 	if (columns > rows) {
 		add_rows(&new_m, rows, columns);
 	}
-
-	print_matrix_m(new_m, columns, columns);
 
 	*res = new_m;
 

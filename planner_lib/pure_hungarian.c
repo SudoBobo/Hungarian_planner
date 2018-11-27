@@ -16,15 +16,12 @@ int double_eq(double d1, double d2) {
 	return fabs(d1 - d2) < 0.000001;
 }
 
-// TODO here is the bug
 void alternate_pairs_in_path(int *curr_path, int last_elem_idx,
 			     int *edge_r_to_c, int *edge_c_to_r) {
 
 	// there must be even amount of vertexes
 	// and odd amount of edges
-
 	int amount_of_vertexes = last_elem_idx + 1;
-//	assert(last_elem_idx == 1 || last_elem_idx % 2 == 1);
 	assert(amount_of_vertexes % 2 == 0);
 
 	for (int i = 0; i < last_elem_idx; i++) {
@@ -32,20 +29,14 @@ void alternate_pairs_in_path(int *curr_path, int last_elem_idx,
 		if (i % 2 == 0) {
 			int r = curr_path[i];
 			int c = curr_path[i+1];
-
-			printf("adding connection from r %d to c %d\n", r, c);
-
-			// remove old edge from r_to_c
+//			printf("adding connection from r %d to c %d\n", r, c);
 			edge_r_to_c[r] = c;
 			edge_c_to_r[c] = r;
 		} else {
 			// (i+1) <- (i) edge should be removed
 			int c = curr_path[i];
 			int r = curr_path[i+1];
-
-			printf("removing connection from c %d to r %d\n", c, r);
-//			edge_c_to_r[c] = r;
-
+//			printf("removing connection from c %d to r %d\n", c, r);
 		}
 	}
 }
@@ -136,7 +127,7 @@ int DFS(int idx, char r_or_c, int *curr_path, int *curr_path_idx,
 	}
 }
 
-int ** hungarian_assignment(double **m, int n, int n_pairs_needed) {
+int hungarian_assignment(double **m, int n, int **pairs, int n_pairs_needed) {
 	// init potential
 	double *u = (double*) malloc(n * sizeof(double));
 	double *v = (double*) malloc(n * sizeof(double));
@@ -225,7 +216,6 @@ int ** hungarian_assignment(double **m, int n, int n_pairs_needed) {
 		set_all(c_visited_overall, n, 0);
 	}
 
-	// TODO make sure you clear up everything
 	finish:
 	for (int i = 0; i < n; i++) {
 		free(m[i]);
@@ -233,38 +223,16 @@ int ** hungarian_assignment(double **m, int n, int n_pairs_needed) {
 	free(u);
 	free(v);
 
-
-	int **optimal_pairs = (int **) malloc(n_pairs_needed * sizeof(int *));
-	for (int i = 0; i < n_pairs_needed; i++) {
-		optimal_pairs[i] = (int *) malloc(2 * sizeof(int));
-	}
-
-
-//	printf("n_pairs_needed %d\n", n_pairs_needed);
-//	printf("n_pair_found %d\n", n_pairs_found);
-//
 	int curr_pair = 0;
-//	printf("printing r_to_c\n");
-//
-//	for (int r = 0; r < n; r++) {
-//		printf("(%d %d)  ", r, edge_r_to_c[r]);
-//	}
-//
-//	printf("\n");
-//	printf("printing c_to_r\n");
-//
-//	for (int c = 0; c < n; c++) {
-//		printf("(%d %d)  ", c, edge_c_to_r[c]);
-//	}
 
 	for (int r = 0; r < n; r++) {
 		int c = edge_r_to_c[r];
 		if (c != -1) {
-			optimal_pairs[curr_pair][0] = r;
-			optimal_pairs[curr_pair][1] = c;
+			pairs[curr_pair][0] = r;
+			pairs[curr_pair][1] = c;
 			curr_pair++;
 		}
 	}
 
-	return optimal_pairs;
+	return n_pairs_needed;
 }

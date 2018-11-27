@@ -71,7 +71,13 @@ bool hungarian_test_1() {
 	m[2][2] = 1.50174e+09;
 
 	int n_pairs_needed = (rows > columns) ? columns : rows;
-	int **pairs = hungarian_assignment(m, n, n_pairs_needed);
+
+	int **pairs = (int**) malloc(n_pairs_needed * sizeof(int *));
+	for (int i = 0; i < n_pairs_needed; i++) {
+		pairs[i] = (int*) malloc(2 * sizeof(int));
+	}
+
+	hungarian_assignment(m, n, pairs, n_pairs_needed);
 
 	int **expected_pairs = (int**) malloc(n_pairs_needed * sizeof(int *));
 	for (int i = 0; i < n_pairs_needed; i++) {
@@ -121,7 +127,13 @@ bool hungarian_test_2() {
 	m[3][3] = 4.84453e+08;
 
 	int n_pairs_needed = (rows > columns) ? columns : rows;
-	int **pairs = hungarian_assignment(m, n, n_pairs_needed);
+
+	int **pairs = (int**) malloc(n_pairs_needed * sizeof(int *));
+	for (int i = 0; i < n_pairs_needed; i++) {
+		pairs[i] = (int*) malloc(2 * sizeof(int));
+	}
+
+	hungarian_assignment(m, n, pairs, n_pairs_needed);
 
 	int **expected_pairs = (int**) malloc(n_pairs_needed * sizeof(int *));
 	for (int i = 0; i < n_pairs_needed; i++) {
@@ -184,7 +196,12 @@ bool hungarian_test_3() {
 	m[4][4] = 9.9681e+08;
 
 	int n_pairs_needed = (rows > columns) ? columns : rows;
-	int **pairs = hungarian_assignment(m, n, n_pairs_needed);
+	int **pairs = (int**) malloc(n_pairs_needed * sizeof(int *));
+	for (int i = 0; i < n_pairs_needed; i++) {
+		pairs[i] = (int*) malloc(2 * sizeof(int));
+	}
+
+	hungarian_assignment(m, n, pairs, n_pairs_needed);
 
 	int **expected_pairs = (int**) malloc(n_pairs_needed * sizeof(int *));
 	for (int i = 0; i < n_pairs_needed; i++) {
@@ -266,8 +283,8 @@ bool data_preparer_test_1() {
 }
 
 int main() {
-	printf("data_preparer_test_1: %s\n", data_preparer_test_1() ? "true":"false");
-	printf("hungarian_test 1 result: %s\n", hungarian_test_1() ? "true":"false");
-	printf("hungarian_test 2 result: %s\n", hungarian_test_2() ? "true":"false");
-	printf("hungarian_test 3 result: %s\n", hungarian_test_3() ? "true":"false");
+	printf("data_preparer_test 1: %s\n", data_preparer_test_1() ? "ok":"failed");
+	printf("hungarian_test 1 result: %s\n", hungarian_test_1() ? "ok":"failed");
+	printf("hungarian_test 2 result: %s\n", hungarian_test_2() ? "ok":"failed");
+	printf("hungarian_test 3 result: %s\n", hungarian_test_3() ? "ok":"failed");
 }
