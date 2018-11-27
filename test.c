@@ -1,6 +1,17 @@
 #include "planner_lib/planner.c"
 #include <stdio.h>
 
+void print_matrix(double **m, int rows, int columns) {
+	printf("\n");
+
+	for (int r = 0; r < rows; r++) {
+		for (int c = 0; c < columns; c++) {
+			printf("%f ", m[r][c]);
+		}
+		printf("\n");
+	}
+}
+
 void print_pairs(int **p, int n_pairs) {
 	for (int i = 0; i < n_pairs; i++) {
 		printf("%d %d   ", p[i][0], p[i][1]);
@@ -23,6 +34,16 @@ bool compare(int** p, int** exp_p, int n_pairs) {
 		}
 		if (!is_found)
 			return false;
+	}
+	return true;
+}
+
+bool compare_matrices(double ** m1, double** m2, int rows, int columns) {
+	for (int r = 0; r < rows; r++){
+		for (int c = 0; c < columns; c++) {
+			if (fabs(m1[r][c] - m2[r][c]) > 0.000000000000001)
+				return false;
+		}
 	}
 	return true;
 }
@@ -50,7 +71,7 @@ bool hungarian_test_1() {
 	m[2][2] = 1.50174e+09;
 
 	int n_pairs_needed = (rows > columns) ? columns : rows;
-	int **pairs = hungarian_assignment_test(m, n, n_pairs_needed);
+	int **pairs = hungarian_assignment(m, n, n_pairs_needed);
 
 	int **expected_pairs = (int**) malloc(n_pairs_needed * sizeof(int *));
 	for (int i = 0; i < n_pairs_needed; i++) {
@@ -65,12 +86,6 @@ bool hungarian_test_1() {
 
 	expected_pairs[2][0] = 2;
 	expected_pairs[2][1] = 1;
-
-//	printf("exp\n");
-//	print_pairs(expected_pairs, n_pairs_needed);
-//
-//	printf("got\n");
-//	print_pairs(pairs, n_pairs_needed);
 
 	return compare(pairs, expected_pairs, n_pairs_needed);
 }
@@ -106,7 +121,7 @@ bool hungarian_test_2() {
 	m[3][3] = 4.84453e+08;
 
 	int n_pairs_needed = (rows > columns) ? columns : rows;
-	int **pairs = hungarian_assignment_test(m, n, n_pairs_needed);
+	int **pairs = hungarian_assignment(m, n, n_pairs_needed);
 
 	int **expected_pairs = (int**) malloc(n_pairs_needed * sizeof(int *));
 	for (int i = 0; i < n_pairs_needed; i++) {
@@ -124,12 +139,6 @@ bool hungarian_test_2() {
 
 	expected_pairs[3][0] = 3;
 	expected_pairs[3][1] = 2;
-
-//	printf("exp\n");
-//	print_pairs(expected_pairs, n_pairs_needed);
-//
-//	printf("got\n");
-//	print_pairs(pairs, n_pairs_needed);
 
 	return compare(pairs, expected_pairs, n_pairs_needed);
 }
@@ -175,7 +184,7 @@ bool hungarian_test_3() {
 	m[4][4] = 9.9681e+08;
 
 	int n_pairs_needed = (rows > columns) ? columns : rows;
-	int **pairs = hungarian_assignment_test(m, n, n_pairs_needed);
+	int **pairs = hungarian_assignment(m, n, n_pairs_needed);
 
 	int **expected_pairs = (int**) malloc(n_pairs_needed * sizeof(int *));
 	for (int i = 0; i < n_pairs_needed; i++) {
@@ -197,20 +206,68 @@ bool hungarian_test_3() {
 	expected_pairs[4][0] = 4;
 	expected_pairs[4][1] = 3;
 
-//	printf("exp\n");
-//	print_pairs(expected_pairs, n_pairs_needed);
-//
-//	printf("got\n");
-//	print_pairs(pairs, n_pairs_needed);
-
 	return compare(pairs, expected_pairs, n_pairs_needed);
 }
 
+bool data_preparer_test_1() {
+	int rows = 3;
+	int columns = 4;
+
+	double ** in_m = (double**) malloc(rows * sizeof(double *));
+	for (int i = 0; i < rows; i++) {
+		in_m[i] = (double*) malloc(columns * sizeof(double));
+	}
+
+	in_m[0][0] = 1000.0;
+	in_m[0][1] = 700.0;
+	in_m[0][2] = -1.0;
+	in_m[0][3] = -1.0;
+
+	in_m[1][0] = 200.0;
+	in_m[1][1] = -1.0;
+	in_m[1][2] = 1200.0;
+	in_m[1][3] = 600.0;
+
+	in_m[2][0] = 1300.0;
+	in_m[2][1] = 500.0;
+	in_m[2][2] = 800.0;
+	in_m[2][3] = -1.0;
+
+	double **m;
+	int n = prepare_matrix(in_m, rows, columns, &m);
+	assert(n == 4);
+
+	double ** exp_m = (double**) malloc(n * sizeof(double *));
+	for (int i = 0; i < n; i++) {
+		exp_m[i] = (double*) malloc(n * sizeof(double));
+	}
+
+	exp_m[0][0] = 300.0;
+	exp_m[0][1] = 600.0;
+	exp_m[0][2] = INFINITY;
+	exp_m[0][3] = INFINITY;
+
+	exp_m[1][0] = 1100.0;
+	exp_m[1][1] = INFINITY;
+	exp_m[1][2] = 100.0;
+	exp_m[1][3] = 700.0;
+
+	exp_m[2][0] = 0.0;
+	exp_m[2][1] = 800.0;
+	exp_m[2][2] = 500.0;
+	exp_m[2][3] = INFINITY;
+
+	exp_m[3][0] = INFINITY;
+	exp_m[3][1] = INFINITY;
+	exp_m[3][2] = INFINITY;
+	exp_m[3][3] = INFINITY;
+
+	return compare_matrices(m, exp_m, n, n);
+}
+
 int main() {
-
-	printf("hungarian_test 1 result: %s\n", hungarian_test_1()?"true":"false");
-	printf("hungarian_test 2 result: %s\n", hungarian_test_2()?"true":"false");
-	printf("hungarian_test 3 result: %s\n", hungarian_test_3()?"true":"false");
-
-
+	printf("data_preparer_test_1: %s\n", data_preparer_test_1() ? "true":"false");
+	printf("hungarian_test 1 result: %s\n", hungarian_test_1() ? "true":"false");
+	printf("hungarian_test 2 result: %s\n", hungarian_test_2() ? "true":"false");
+	printf("hungarian_test 3 result: %s\n", hungarian_test_3() ? "true":"false");
 }

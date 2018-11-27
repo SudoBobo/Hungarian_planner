@@ -7,10 +7,21 @@
 
 #define BAD_EDGE INFINITY
 
+void print_matrix_m(double **m, int rows, int columns) {
+	printf("\n");
+	for (int r = 0; r < rows; r++) {
+		for (int c = 0; c < columns; c++) {
+			printf("%f ", m[r][c]);
+		}
+		printf("\n");
+	}
+}
+
 void multiply_by_scalar(double **m, int rows, int columns, double scalar) {
 	for (int r = 0; r < rows; r++) {
 		for (int c = 0; c < columns; c++) {
-			m[r][c] *= scalar;
+			if (isnormal(m[r][c]))
+				m[r][c] *= scalar;
 		}
 	}
 }
@@ -19,7 +30,7 @@ void make_positive(double **m, int rows, int columns) {
 	double max = 0;
 	for (int r = 0; r < rows; r++) {
 		for (int c = 0; c < columns; c++) {
-			if (fabs(m[r][c]) > max)
+			if (fabs(m[r][c]) > max && !(isinf(m[r][c])))
 				max = fabs(m[r][c]);
 		}
 	}
@@ -27,54 +38,105 @@ void make_positive(double **m, int rows, int columns) {
 	for (int r = 0; r < rows; r++) {
 		for (int c = 0; c < columns; c++) {
 			m[r][c] += max;
-			assert(m[r][c] >= 0);
 		}
 	}
 }
 
-void add_columns(double **m, int rows, int columns) {
-	for (int r = 0; r < rows; r++) {
-		m[r] = (double*) realloc(m[r], rows * sizeof(double));
-		for (int c = columns; c < columns; c++) {
-			m[r][c] = BAD_EDGE;
-		}
-	}
-}
+void add_columns(double ***m, int rows, int columns) {
+//	for (int r = 0; r < rows; r++) {
+//		m[r] = (double*) realloc(m[r], rows * sizeof(double));
+//		for (int c = columns; c < columns; c++) {
+//			m[r][c] = BAD_EDGE;
+//		}
+//	}
 
-void add_rows(double **m, int rows, int columns) {
-	m = (double**) realloc(m, columns * sizeof(double *));
-	for (int r = rows; r < columns; r++) {
-		m[r] = (double*) malloc(columns * sizeof(double));
-		for (int c = 0; c < columns; c++) {
-			m[r][c] = BAD_EDGE;
-		}
-	}
-}
-
-int prepare_matrix(double **orig_m, int rows, int columns, double **new_m) {
-	double **m = (double**) malloc(rows * sizeof(double *));
+	double **new_m = (double**) malloc(rows * sizeof(double *));
 	for (int i = 0; i < rows; i++) {
-		m[i] = (double*) malloc(columns * sizeof(double));
+		new_m[i] = (double*) malloc(rows * sizeof(double));
+	}
+
+	for (int r = 0; r < rows; r++) {
+		for (int c = 0; c < rows; c++) {
+			if (c < columns)
+				new_m[r][c] = *m[r][c];
+			else
+				new_m[r][c] = BAD_EDGE;
+		}
+	}
+
+	*m = new_m;
+}
+
+void add_rows(double ***m, int rows, int columns) {
+//	printf("adding rows\n");
+//	m = (double**) realloc(m, columns * sizeof(double *));
+//	for (int r = rows; r < columns; r++) {
+//		m[r] = (double*) malloc(columns * sizeof(double));
+//		for (int c = 0; c < columns; c++) {
+//			m[r][c] = BAD_EDGE;
+//		}
+//	}
+	double **new_m = (double**) malloc(columns * sizeof(double *));
+	for (int i = 0; i < columns; i++) {
+		new_m[i] = (double*) malloc(columns * sizeof(double));
+	}
+
+	for (int r = 0; r < columns; r++) {
+		for (int c = 0; c < columns; c++) {
+			if (r < rows)
+				new_m[r][c] = (*m)[r][c];
+			else
+				new_m[r][c] = BAD_EDGE;
+		}
+	}
+
+	*m = new_m;
+}
+
+void set_infs(double **m, int rows, int columns) {
+	for (int r = 0; r < rows; r++) {
+		for (int c = 0; c < columns; c++) {
+			if (fabs(m[r][c] + 1) < 0.00000000000001)
+				m[r][c] = INFINITY;
+		}
+	}
+}
+
+int prepare_matrix(double **orig_m, int rows, int columns, double ***res) {
+	double **new_m = (double**) malloc(rows * sizeof(double *));
+	for (int i = 0; i < rows; i++) {
+		new_m[i] = (double*) malloc(columns * sizeof(double));
 	}
 
 	for (int r = 0; r < rows; r++) {
 		for (int c = 0; c < columns; c++) {
-			m[r][c] = orig_m[r][c];
+			new_m[r][c] = orig_m[r][c];
 		}
 	}
 
-	multiply_by_scalar(m, rows, columns, -1.0);
-	make_positive(m, rows, columns);
+	print_matrix_m(new_m, rows, columns);
+	set_infs(new_m, rows, columns);
+	print_matrix_m(new_m, rows, columns);
+	multiply_by_scalar(new_m, rows, columns, -1.0);
+	print_matrix_m(new_m, rows, columns);
+
+	printf("\nmaking postive\n");
+	make_positive(new_m, rows, columns);
+	print_matrix_m(new_m, rows, columns);
 
 	if (rows > columns) {
-		add_columns(m, rows, columns);
+		add_columns(&new_m, rows, columns);
 	}
+
+	print_matrix_m(new_m, rows, columns);
 
 	if (columns > rows) {
-		add_rows(m, rows, columns);
+		add_rows(&new_m, rows, columns);
 	}
 
-	new_m = m;
+	print_matrix_m(new_m, columns, columns);
+
+	*res = new_m;
 
 	int n = (rows > columns) ? rows : columns;
 	return n;
