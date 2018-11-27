@@ -51,7 +51,7 @@ void add_columns(double ***m, int rows, int columns) {
 	for (int r = 0; r < rows; r++) {
 		for (int c = 0; c < rows; c++) {
 			if (c < columns)
-				new_m[r][c] = *m[r][c];
+				new_m[r][c] = (*m)[r][c];
 			else
 				new_m[r][c] = BAD_EDGE;
 		}

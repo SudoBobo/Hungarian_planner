@@ -2,16 +2,12 @@
 #include <stdio.h>
 #include <time.h>
 
-//srand (time ( NULL));
-
-/* generate a random floating point number from min to max */
 double randfrom(double min, double max)
 {
 	double range = (max - min);
 	double div = RAND_MAX / range;
 	return min + (rand() / div);
 }
-
 
 void print_matrix(double **m, int rows, int columns) {
 	printf("\n");
@@ -418,12 +414,8 @@ void brute_force(double **m , int rows, int columns, int **pairs) {
 		curr_best_path[i] = (int*) malloc(2 * sizeof(int));
 	int curr_best_path_size = 0;
 
-	// TODO mind that results (be pair combination) must be written
-	// into 'pairs' output param
 	rec_func(m, rows, columns, path, &path_idx, n_pairs_needed, is_r_used,
 		 is_c_used, &curr_max, curr_best_path, &curr_best_path_size);
-
-	// use recursive function which return sum and write into pairs on the last stage
 
 	for (int i = 0; i < n_pairs_needed; i++) {
 		pairs[i][0] = curr_best_path[i][0];
@@ -471,32 +463,24 @@ bool full_test_with_brute_force_1() {
 
 	brute_force(m, rows, columns, brute_pairs);
 
-//	printf("\n hing result\n");
-//	print_pairs(pairs, n);
-//
-//	printf("\n brute force result\n");
-//	print_pairs(brute_pairs, rows > columns ? columns : rows);
-
 	return compare_pairs(pairs, brute_pairs, n);
 }
 
 bool full_test_with_brute_force_2() {
-	int rows = 100;
-	int columns = 100;
+	int rows = 7;
+	int columns = 7;
 
 	double ** m = (double**) malloc(rows * sizeof(double *));
 	for (int i = 0; i < rows; i++) {
 		m[i] = (double*) malloc(columns * sizeof(double));
 	}
-
-
 	double min = 200.0;
 	double max = 3000.0;
 
 	for (int r = 0; r < rows; r++) {
 		for (int c = 0; c < columns; c++) {
 			double random = randfrom(min, max);
-			m[r][c] = random > 500.0 ? random : -1;
+			m[r][c] = random > 500.0 ? random : -1.0;
 
 		}
 	}
@@ -522,13 +506,13 @@ bool full_test_with_brute_force_2() {
 
 
 int main() {
-//	printf("data_preparer_test 1: %s\n", data_preparer_test_1() ? "ok":"failed");
-//	printf("hungarian_test 1 result: %s\n", hungarian_test_1() ? "ok":"failed");
-//	printf("hungarian_test 2 result: %s\n", hungarian_test_2() ? "ok":"failed");
-//	printf("hungarian_test 3 result: %s\n", hungarian_test_3() ? "ok":"failed");
-//	printf("full_test 1 result: %s\n", full_test() ? "ok":"failed");
+	printf("data_preparer_test 1: %s\n", data_preparer_test_1() ? "ok":"failed");
+	printf("hungarian_test 1 result: %s\n", hungarian_test_1() ? "ok":"failed");
+	printf("hungarian_test 2 result: %s\n", hungarian_test_2() ? "ok":"failed");
+	printf("hungarian_test 3 result: %s\n", hungarian_test_3() ? "ok":"failed");
+	printf("full_test 1 result: %s\n", full_test() ? "ok":"failed");
 	printf("full test 2 (cmp with brute force) result: %s\n",
 	       full_test_with_brute_force_1() ? "ok":"falied");
 	printf("full test 3 (cmp with brute force) result: %s\n",
-	       full_test_with_brute_force_1() ? "ok":"falied");
+	       full_test_with_brute_force_2() ? "ok":"falied");
 }
