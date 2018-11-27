@@ -16,7 +16,5 @@ int find_optimal_pairs(double **m, int rows, int columns, int **pairs) {
 	int n = prepare_matrix(m, rows, columns, &new_m);
 
 	int n_pairs_needed = (rows > columns) ? columns : rows;
-	hungarian_assignment(new_m, n, pairs, n_pairs_needed);
-
-	return n;
+	return hungarian_assignment(new_m, n, pairs, n_pairs_needed);
 }

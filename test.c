@@ -1,5 +1,17 @@
 #include "planner_lib/planner.c"
 #include <stdio.h>
+#include <time.h>
+
+//srand (time ( NULL));
+
+/* generate a random floating point number from min to max */
+double randfrom(double min, double max)
+{
+	double range = (max - min);
+	double div = RAND_MAX / range;
+	return min + (rand() / div);
+}
+
 
 void print_matrix(double **m, int rows, int columns) {
 	printf("\n");
@@ -19,7 +31,7 @@ void print_pairs(int **p, int n_pairs) {
 	printf("\n");
 }
 
-bool compare(int** p, int** exp_p, int n_pairs) {
+bool compare_pairs(int **p, int **exp_p, int n_pairs) {
 	for (int i = 0; i < n_pairs; i++) {
 		int f = exp_p[i][0];
 		int s = exp_p[i][1];
@@ -93,7 +105,7 @@ bool hungarian_test_1() {
 	expected_pairs[2][0] = 2;
 	expected_pairs[2][1] = 1;
 
-	return compare(pairs, expected_pairs, n_pairs_needed);
+	return compare_pairs(pairs, expected_pairs, n_pairs_needed);
 }
 
 bool hungarian_test_2() {
@@ -152,7 +164,7 @@ bool hungarian_test_2() {
 	expected_pairs[3][0] = 3;
 	expected_pairs[3][1] = 2;
 
-	return compare(pairs, expected_pairs, n_pairs_needed);
+	return compare_pairs(pairs, expected_pairs, n_pairs_needed);
 }
 
 bool hungarian_test_3() {
@@ -223,7 +235,7 @@ bool hungarian_test_3() {
 	expected_pairs[4][0] = 4;
 	expected_pairs[4][1] = 3;
 
-	return compare(pairs, expected_pairs, n_pairs_needed);
+	return compare_pairs(pairs, expected_pairs, n_pairs_needed);
 }
 
 bool data_preparer_test_1() {
@@ -282,9 +294,241 @@ bool data_preparer_test_1() {
 	return compare_matrices(m, exp_m, n, n);
 }
 
+bool full_test() {
+	int rows = 3;
+	int columns = 4;
+
+	double ** m = (double**) malloc(rows * sizeof(double *));
+	for (int i = 0; i < rows; i++) {
+		m[i] = (double*) malloc(columns * sizeof(double));
+	}
+
+	m[0][0] = 1000.0;
+	m[0][1] = 700.0;
+	m[0][2] = -1.0;
+	m[0][3] = -1.0;
+
+	m[1][0] = 200.0;
+	m[1][1] = -1.0;
+	m[1][2] = 1200.0;
+	m[1][3] = 600.0;
+
+	m[2][0] = 1300.0;
+	m[2][1] = 500.0;
+	m[2][2] = 800.0;
+	m[2][3] = -1.0;
+
+	int n = rows > columns ? columns : rows;
+	int **pairs = (int **) malloc(n * sizeof(int *));
+	for (int i = 0; i < n; i++)
+		pairs[i] = (int*) malloc(2 * sizeof(int));
+
+	int n_found_pairs = find_optimal_pairs(m, rows, columns, pairs);
+
+	if (n_found_pairs != n)
+		return false;
+
+	int ** exp_pairs = (int **) malloc(n * sizeof(int *));
+	for (int i = 0; i < n; i++)
+		exp_pairs[i] = (int*) malloc(2 * sizeof(int));
+
+
+	exp_pairs[0][0] = 0;
+	exp_pairs[0][1] = 1;
+
+	exp_pairs[1][0] = 1;
+	exp_pairs[1][1] = 2;
+
+	exp_pairs[2][0] = 2;
+	exp_pairs[2][1] = 0;
+
+	return compare_pairs(pairs, exp_pairs, n);
+}
+
+void rec_func(double **m, int rows, int columns, int **path,
+	      int *path_idx, int n_pairs_needed, int *is_r_used,
+	      int *is_c_used, double *curr_max, int **curr_best_path,
+		int *curr_best_path_size) {
+	// if no step may be done then calculate new possible max
+	// cmp with current max and rewrite
+	if (*path_idx == n_pairs_needed){
+		double new_max = 0.0;
+		for (int i = 0; i < *path_idx; i++){
+			int r = path[i][0];
+			int c = path[i][1];
+			assert(isnormal(m[r][c]));
+			new_max += m[r][c];
+		}
+		if (new_max > *curr_max){
+			*curr_max = new_max;
+			// update curr_best_path
+			*curr_best_path_size = *path_idx;
+			for (int i = 0; i < *path_idx; i++) {
+				curr_best_path[i][0] = path[i][0];
+				curr_best_path[i][1] = path[i][1];
+			}
+		}
+		return;
+	}
+
+	// if some steps may be done then do recursive calls for all of them
+	for (int r = 0; r < rows; r++) {
+		if (is_r_used[r] == 0) {
+			is_r_used[r] = 1;
+			for (int c = 0; c < columns; c++) {
+
+				if (is_c_used[c] == 0 && isnormal(m[r][c])) {
+					is_c_used[c] = 1;
+					path[*path_idx][0] = r;
+					path[*path_idx][1] = c;
+					*path_idx += 1;
+
+					rec_func(m, rows, columns, path,
+					         path_idx, n_pairs_needed,
+						 is_r_used,
+					         is_c_used, curr_max,
+						 curr_best_path,
+						 curr_best_path_size);
+
+					*path_idx -= 1;
+					path[*path_idx][0] = -1;
+					path[*path_idx][1] = -1;
+					is_c_used[c] = 0;
+				}
+			}
+			is_r_used[r] = 0;
+		}
+	}
+}
+
+void brute_force(double **m , int rows, int columns, int **pairs) {
+	int *is_r_used = (int*) calloc(rows, sizeof(int));
+	int *is_c_used = (int*) calloc(columns, sizeof(int));
+
+	int n_pairs_needed = rows > columns ? columns : rows;
+	int **path = (int**) malloc(n_pairs_needed * sizeof(int*));
+	for (int i = 0; i < n_pairs_needed; i++)
+		path[i] = (int*) malloc(2 * sizeof(int));
+	int path_idx = 0;
+
+	double curr_max = 0;
+
+	int **curr_best_path = (int**) malloc(n_pairs_needed * sizeof(int*));
+	for (int i = 0; i < n_pairs_needed; i++)
+		curr_best_path[i] = (int*) malloc(2 * sizeof(int));
+	int curr_best_path_size = 0;
+
+	// TODO mind that results (be pair combination) must be written
+	// into 'pairs' output param
+	rec_func(m, rows, columns, path, &path_idx, n_pairs_needed, is_r_used,
+		 is_c_used, &curr_max, curr_best_path, &curr_best_path_size);
+
+	// use recursive function which return sum and write into pairs on the last stage
+
+	for (int i = 0; i < n_pairs_needed; i++) {
+		pairs[i][0] = curr_best_path[i][0];
+		pairs[i][1] = curr_best_path[i][1];
+	}
+}
+
+bool full_test_with_brute_force_1() {
+	int rows = 3;
+	int columns = 4;
+
+	double ** m = (double**) malloc(rows * sizeof(double *));
+	for (int i = 0; i < rows; i++) {
+		m[i] = (double*) malloc(columns * sizeof(double));
+	}
+
+	m[0][0] = 1000.0;
+	m[0][1] = 700.0;
+	m[0][2] = -1.0;
+	m[0][3] = -1.0;
+
+	m[1][0] = 200.0;
+	m[1][1] = -1.0;
+	m[1][2] = 1200.0;
+	m[1][3] = 600.0;
+
+	m[2][0] = 1300.0;
+	m[2][1] = 500.0;
+	m[2][2] = 800.0;
+	m[2][3] = -1.0;
+
+	int n = rows > columns ? columns : rows;
+	int **pairs = (int **) malloc(n * sizeof(int *));
+	for (int i = 0; i < n; i++)
+		pairs[i] = (int*) malloc(2 * sizeof(int));
+
+	int n_found_pairs = find_optimal_pairs(m, rows, columns, pairs);
+
+	if (n_found_pairs != n)
+		return false;
+
+	int ** brute_pairs = (int **) malloc(n * sizeof(int *));
+	for (int i = 0; i < n; i++)
+		brute_pairs[i] = (int*) malloc(2 * sizeof(int));
+
+	brute_force(m, rows, columns, brute_pairs);
+
+//	printf("\n hing result\n");
+//	print_pairs(pairs, n);
+//
+//	printf("\n brute force result\n");
+//	print_pairs(brute_pairs, rows > columns ? columns : rows);
+
+	return compare_pairs(pairs, brute_pairs, n);
+}
+
+bool full_test_with_brute_force_2() {
+	int rows = 100;
+	int columns = 100;
+
+	double ** m = (double**) malloc(rows * sizeof(double *));
+	for (int i = 0; i < rows; i++) {
+		m[i] = (double*) malloc(columns * sizeof(double));
+	}
+
+
+	double min = 200.0;
+	double max = 3000.0;
+
+	for (int r = 0; r < rows; r++) {
+		for (int c = 0; c < columns; c++) {
+			double random = randfrom(min, max);
+			m[r][c] = random > 500.0 ? random : -1;
+
+		}
+	}
+
+	int n = rows > columns ? columns : rows;
+	int **pairs = (int **) malloc(n * sizeof(int *));
+	for (int i = 0; i < n; i++)
+		pairs[i] = (int*) malloc(2 * sizeof(int));
+
+	int n_found_pairs = find_optimal_pairs(m, rows, columns, pairs);
+
+	if (n_found_pairs != n)
+		return false;
+
+	int ** brute_pairs = (int **) malloc(n * sizeof(int *));
+	for (int i = 0; i < n; i++)
+		brute_pairs[i] = (int*) malloc(2 * sizeof(int));
+
+	brute_force(m, rows, columns, brute_pairs);
+
+	return compare_pairs(pairs, brute_pairs, n);
+}
+
+
 int main() {
-	printf("data_preparer_test 1: %s\n", data_preparer_test_1() ? "ok":"failed");
-	printf("hungarian_test 1 result: %s\n", hungarian_test_1() ? "ok":"failed");
-	printf("hungarian_test 2 result: %s\n", hungarian_test_2() ? "ok":"failed");
-	printf("hungarian_test 3 result: %s\n", hungarian_test_3() ? "ok":"failed");
+//	printf("data_preparer_test 1: %s\n", data_preparer_test_1() ? "ok":"failed");
+//	printf("hungarian_test 1 result: %s\n", hungarian_test_1() ? "ok":"failed");
+//	printf("hungarian_test 2 result: %s\n", hungarian_test_2() ? "ok":"failed");
+//	printf("hungarian_test 3 result: %s\n", hungarian_test_3() ? "ok":"failed");
+//	printf("full_test 1 result: %s\n", full_test() ? "ok":"failed");
+	printf("full test 2 (cmp with brute force) result: %s\n",
+	       full_test_with_brute_force_1() ? "ok":"falied");
+	printf("full test 3 (cmp with brute force) result: %s\n",
+	       full_test_with_brute_force_1() ? "ok":"falied");
 }
